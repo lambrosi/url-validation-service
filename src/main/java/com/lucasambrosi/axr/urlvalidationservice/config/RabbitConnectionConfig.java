@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class RabbitConfig {
+public class RabbitConnectionConfig {
 
     @Value("${RABBITMQ_HOST}")
     private String hostname;
@@ -22,6 +22,9 @@ public class RabbitConfig {
     @Value("${RABBITMQ_PASSWORD}")
     private String password;
 
+    @Value("${NUMBER_OF_VALIDATION_CONSUMERS}")
+    private Integer maxValidationConsumers;
+
     @Bean
     public ConnectionFactory connectionFactory() {
         CachingConnectionFactory connectionFactory = new CachingConnectionFactory(hostname, port);
@@ -32,10 +35,17 @@ public class RabbitConfig {
     }
 
     @Bean
-    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory() {
+    public SimpleRabbitListenerContainerFactory genericListenerContainerFactory() {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory());
         factory.setMessageConverter(jackson2JsonMessageConverter());
+        return factory;
+    }
+
+    @Bean
+    public SimpleRabbitListenerContainerFactory validationListenerContainerFactory() {
+        SimpleRabbitListenerContainerFactory factory = this.genericListenerContainerFactory();
+        factory.setMaxConcurrentConsumers(maxValidationConsumers);
         return factory;
     }
 
