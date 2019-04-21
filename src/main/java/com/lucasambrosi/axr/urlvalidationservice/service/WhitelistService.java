@@ -28,16 +28,20 @@ public class WhitelistService {
     }
 
     public void insertRegularExpression(final RegexInput input) {
-        LOGGER.info("Validating input regular expression.");
-        if (StringUtils.isEmpty(input.getRegex())) {
-            throw new IllegalArgumentException("Regular expression must not be null.");
-        }
+        this.validateInputeRegex(input.getRegex());
 
         if (StringUtils.isEmpty(input.getClient())) {
             this.insertInGlobalWhitelist(input);
             return;
         }
         this.insertInClientWhitelist(input);
+    }
+
+    private void validateInputeRegex(String regex) {
+        LOGGER.info("Validating input regular expression.");
+        if (StringUtils.isEmpty(regex)) {
+            throw new IllegalArgumentException("Regular expression must not be null.");
+        }
     }
 
     private void insertInGlobalWhitelist(final RegexInput input) {
