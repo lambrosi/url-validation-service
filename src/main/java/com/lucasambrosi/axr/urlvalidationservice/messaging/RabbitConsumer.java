@@ -32,7 +32,7 @@ public class RabbitConsumer {
         LOGGER.info("Received message {}.", regexInput.toString());
         try {
             whitelistService.insertRegularExpression(regexInput);
-        } catch (IllegalArgumentException ex) {
+        } catch (Exception ex) {
             LOGGER.error("Error on insert regular expression. Body: " + regexInput.toString(), ex);
         }
     }
@@ -43,7 +43,7 @@ public class RabbitConsumer {
         try {
             ValidationOutput output = validationService.validate(validationInput);
             rabbitProducer.sendResponseValidationMessage(output);
-        } catch (IllegalArgumentException ex) {
+        } catch (Exception ex) {
             LOGGER.error("Error on validate URL. Body: " + validationInput.toString(), ex);
         }
     }
