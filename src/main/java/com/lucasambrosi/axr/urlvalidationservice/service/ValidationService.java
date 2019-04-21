@@ -35,7 +35,7 @@ public class ValidationService {
     private Optional<String> getFirstMatchedRegex(String clientName, String url) {
         return whitelistService.getAllRegexForAClient(clientName)
                 .stream()
-                .filter(it -> filterByMatchedRegex(it, url))
+                .filter(regex -> filterByMatchedRegex(regex, url))
                 .findFirst();
     }
 
