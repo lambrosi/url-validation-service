@@ -28,7 +28,7 @@ public class WhitelistService {
     }
 
     public void insertRegularExpression(final RegexInput input) {
-        this.validateInputeRegex(input.getRegex());
+        this.validateInputRegex(input.getRegex());
 
         if (StringUtils.isEmpty(input.getClient())) {
             this.insertInGlobalWhitelist(input);
@@ -37,7 +37,7 @@ public class WhitelistService {
         this.insertInClientWhitelist(input);
     }
 
-    private void validateInputeRegex(String regex) {
+    private void validateInputRegex(String regex) {
         LOGGER.info("Validating input regular expression.");
         if (StringUtils.isEmpty(regex)) {
             throw new IllegalArgumentException("Regular expression must not be null.");
