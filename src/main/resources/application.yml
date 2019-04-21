@@ -1,0 +1,8 @@
+spring:
+  datasource:
+    url: ${JDBC_URL}
+    driverClassName: com.mysql.cj.jdbc.Driver
+    testWhileIdle: true
+    validationQuery: SELECT 1
+  liquibase:
+    changeLog: classpath:/db.changelog/changelog.xml

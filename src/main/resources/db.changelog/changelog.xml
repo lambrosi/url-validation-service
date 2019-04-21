@@ -1,0 +1,15 @@
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="001.CREATE_CLIENT_WHITELIST_TABLE" author="lucas.derrossi">
+        <sqlFile path="scripts/001.CREATE_CLIENT_WHITELIST_TABLE.sql" relativeToChangelogFile="true"/>
+    </changeSet>
+
+    <changeSet id="002.CREATE_GLOBAL_WHITELIST_TABLE" author="lucas.derrossi">
+        <sqlFile path="scripts/002.CREATE_GLOBAL_WHITELIST_TABLE.sql" relativeToChangelogFile="true"/>
+    </changeSet>
+
+</databaseChangeLog>
