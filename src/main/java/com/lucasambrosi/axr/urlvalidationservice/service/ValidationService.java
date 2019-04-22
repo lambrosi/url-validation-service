@@ -1,12 +1,15 @@
 package com.lucasambrosi.axr.urlvalidationservice.service;
 
+import com.lucasambrosi.axr.urlvalidationservice.entity.GlobalWhitelist;
 import com.lucasambrosi.axr.urlvalidationservice.input.ValidationInput;
 import com.lucasambrosi.axr.urlvalidationservice.output.ValidationOutput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -33,10 +36,39 @@ public class ValidationService {
     }
 
     private Optional<String> getFirstMatchedRegex(String clientName, String url) {
-        return whitelistService.getAllRegexForAClient(clientName)
-                .stream()
+        List<String> regexForClient = whitelistService.getRegexForClient(clientName);
+        Optional<String> matchedRegex = getMatchedRegex(regexForClient, url);
+
+        if (matchedRegex.isPresent()) {
+            return matchedRegex;
+        }
+        return getMatchedRegexFromGlobalWhitelisPageable(url);
+    }
+
+    private Optional<String> getMatchedRegex(List<String> regexList, String url) {
+        return regexList.stream()
+                .distinct()
                 .filter(regex -> filterByMatchedRegex(regex, url))
                 .findFirst();
+    }
+
+    private Optional<String> getMatchedRegexFromGlobalWhitelisPageable(final String url) {
+        Optional<String> matchedRegex = Optional.empty();
+
+        Page<GlobalWhitelist> globalWhitelistPage = whitelistService.getAllRegexFromGlobalwhitelistPageable();
+        for (int i = 0; i < globalWhitelistPage.getTotalPages(); i++) {
+            List<String> regexForClient = globalWhitelistPage
+                    .map(GlobalWhitelist::getRegex)
+                    .getContent();
+
+            matchedRegex = getMatchedRegex(regexForClient, url);
+
+            if (matchedRegex.isPresent()) {
+                return matchedRegex;
+            }
+            globalWhitelistPage = whitelistService.getAllRegexFromGlobalwhitelistPageable(globalWhitelistPage.nextPageable());
+        }
+        return matchedRegex;
     }
 
     private boolean filterByMatchedRegex(String regex, String url) {

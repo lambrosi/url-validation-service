@@ -7,10 +7,12 @@ import com.lucasambrosi.axr.urlvalidationservice.repository.ClientWhitelistRepos
 import com.lucasambrosi.axr.urlvalidationservice.repository.GlobalWhitelistRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,6 +20,8 @@ import java.util.stream.Collectors;
 public class WhitelistService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WhitelistService.class);
+    private static final int DEFAULT_PAGE_NUMBER = 0;
+    private static final int DEFAULT_PAGE_SIZE = 5;
     private GlobalWhitelistRepository globalWhitelistRepository;
     private ClientWhitelistRepository clientWhitelistRepository;
 
@@ -60,20 +64,24 @@ public class WhitelistService {
         clientWhitelistRepository.save(clientWhitelist);
     }
 
-    public List<String> getAllRegexForAClient(String clientName) {
-        //TODO review how to get full list in a better way
-        List<String> globalWhitelists = globalWhitelistRepository.findByActiveTrue().stream()
-                .map(GlobalWhitelist::getRegex)
-                .collect(Collectors.toList());
-
-        List<String> clientWhitelists = clientWhitelistRepository.findByClientAndActiveTrue(clientName).stream()
+    public List<String> getRegexForClient(String clientName) {
+        LOGGER.info("Retrieving all regex for the client '{}'.", clientName);
+        return clientWhitelistRepository.findByClientAndActiveTrue(clientName)
+                .stream()
                 .map(ClientWhitelist::getRegex)
+                .distinct()
                 .collect(Collectors.toList());
+    }
 
-        List<String> outputList = new ArrayList<>(globalWhitelists);
-        outputList.addAll(clientWhitelists);
+    public Page<GlobalWhitelist> getAllRegexFromGlobalwhitelistPageable() {
+        LOGGER.info("Retrieving regex from globalwhitelist pageable, page {}, size {}.",
+                DEFAULT_PAGE_NUMBER, DEFAULT_PAGE_SIZE);
+        return globalWhitelistRepository.findByActiveTrue(PageRequest.of(DEFAULT_PAGE_NUMBER, DEFAULT_PAGE_SIZE));
+    }
 
-        return outputList;
-
+    public Page<GlobalWhitelist> getAllRegexFromGlobalwhitelistPageable(Pageable pageable) {
+        LOGGER.info("Retrieving regex from globalwhitelist, page {}, size {}.",
+                pageable.getPageNumber(), pageable.getPageSize());
+        return globalWhitelistRepository.findByActiveTrue(pageable);
     }
 }
