@@ -7,6 +7,7 @@ import com.lucasambrosi.axr.urlvalidationservice.service.ValidationService;
 import com.lucasambrosi.axr.urlvalidationservice.service.WhitelistService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
@@ -33,7 +34,8 @@ public class RabbitConsumer {
         try {
             whitelistService.insertRegularExpression(regexInput);
         } catch (Exception ex) {
-            LOGGER.error("Error on insert regular expression. Body: " + regexInput.toString(), ex);
+            LOGGER.error("Error on insert regular expression. Body: {}.", regexInput.toString());
+            throw new AmqpRejectAndDontRequeueException(ex);
         }
     }
 
@@ -44,7 +46,8 @@ public class RabbitConsumer {
             ValidationOutput output = validationService.validate(validationInput);
             rabbitProducer.sendResponseValidationMessage(output);
         } catch (Exception ex) {
-            LOGGER.error("Error on validate URL. Body: " + validationInput.toString(), ex);
+            LOGGER.error("Error on validate URL. Body: {}.", validationInput.toString());
+            throw new AmqpRejectAndDontRequeueException(ex);
         }
     }
 }
