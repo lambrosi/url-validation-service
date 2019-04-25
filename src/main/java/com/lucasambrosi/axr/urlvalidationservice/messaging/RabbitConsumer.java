@@ -32,7 +32,8 @@ public class RabbitConsumer {
     public void insertRegex(@Payload final RegexInput regexInput) {
         LOGGER.info("Received message {}.", regexInput.toString());
         try {
-            whitelistService.insertRegularExpression(regexInput);
+            Long regexId = whitelistService.insertRegularExpression(regexInput);
+            LOGGER.info("Included regex {} with ID {}.", regexInput.getRegex(), regexId);
         } catch (Exception ex) {
             LOGGER.error("Error on insert regular expression. Body: {}.", regexInput.toString());
             throw new AmqpRejectAndDontRequeueException(ex);

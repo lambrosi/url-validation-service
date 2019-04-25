@@ -1,6 +1,6 @@
 package com.lucasambrosi.axr.urlvalidationservice.service;
 
-import com.lucasambrosi.axr.urlvalidationservice.entity.GlobalWhitelist;
+import com.lucasambrosi.axr.urlvalidationservice.entity.Whitelist;
 import com.lucasambrosi.axr.urlvalidationservice.input.ValidationInput;
 import com.lucasambrosi.axr.urlvalidationservice.output.ValidationOutput;
 import org.slf4j.Logger;
@@ -11,6 +11,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 @Service
@@ -35,43 +36,53 @@ public class ValidationService {
         return output;
     }
 
-    private Optional<String> getFirstMatchedRegex(String clientName, String url) {
-        List<String> regexForClient = whitelistService.getRegexForClient(clientName);
-        Optional<String> matchedRegex = getMatchedRegex(regexForClient, url);
+    private Optional<String> getFirstMatchedRegex(final String clientName, final String url) {
+        Function<WhitelistService, Page<Whitelist>> lambdaForSearch = this.getLambdaForSearch(clientName);
+        Optional<String> matchedRegex = this.getMatchedRegex(lambdaForSearch, clientName, url);
 
         if (matchedRegex.isPresent()) {
             return matchedRegex;
         }
-        return getMatchedRegexFromGlobalWhitelisPageable(url);
+
+        lambdaForSearch = this.getLambdaForSearch(null);
+        return this.getMatchedRegex(lambdaForSearch, url);
     }
 
-    private Optional<String> getMatchedRegex(List<String> regexList, String url) {
+    private Function<WhitelistService, Page<Whitelist>> getLambdaForSearch(final String clientName) {
+        return service -> service.getAllRegex(clientName);
+    }
+
+    private Optional<String> getMatchedRegex(Function<WhitelistService, Page<Whitelist>> function, final String url) {
+        return this.getMatchedRegex(function, null, url);
+    }
+
+    private Optional<String> getMatchedRegex(Function<WhitelistService, Page<Whitelist>> searchFunction,
+                                             final String clientName,
+                                             final String url) {
+        Page<Whitelist> whitelistPage = searchFunction.apply(whitelistService);
+
+        List<String> regexForClient = whitelistPage
+                .map(Whitelist::getRegex)
+                .getContent();
+
+        Optional<String> matchedRegex = getFirstPositiveMatch(regexForClient, url);
+
+        if (matchedRegex.isPresent() || !whitelistPage.hasNext()) {
+            return matchedRegex;
+        }
+
+        Function<WhitelistService, Page<Whitelist>> pageableSearchFunction = service -> service.getAllRegexPageable(clientName, whitelistPage.nextPageable());
+        return this.getMatchedRegex(pageableSearchFunction, clientName, url);
+    }
+
+    private Optional<String> getFirstPositiveMatch(List<String> regexList, final String url) {
         return regexList.stream()
                 .distinct()
-                .filter(regex -> filterByMatchedRegex(regex, url))
+                .filter(regex -> verifyThatRegexMatches(regex, url))
                 .findFirst();
     }
 
-    private Optional<String> getMatchedRegexFromGlobalWhitelisPageable(final String url) {
-        Optional<String> matchedRegex = Optional.empty();
-
-        Page<GlobalWhitelist> globalWhitelistPage = whitelistService.getAllRegexFromGlobalwhitelistPageable();
-        for (int i = 0; i < globalWhitelistPage.getTotalPages(); i++) {
-            List<String> regexForClient = globalWhitelistPage
-                    .map(GlobalWhitelist::getRegex)
-                    .getContent();
-
-            matchedRegex = getMatchedRegex(regexForClient, url);
-
-            if (matchedRegex.isPresent()) {
-                return matchedRegex;
-            }
-            globalWhitelistPage = whitelistService.getAllRegexFromGlobalwhitelistPageable(globalWhitelistPage.nextPageable());
-        }
-        return matchedRegex;
-    }
-
-    private boolean filterByMatchedRegex(String regex, String url) {
+    private boolean verifyThatRegexMatches(final String regex, final String url) {
         LOGGER.info("Verifying if regex '{}' match with URL '{}'.", regex, url);
         return Pattern.matches(regex, url);
     }

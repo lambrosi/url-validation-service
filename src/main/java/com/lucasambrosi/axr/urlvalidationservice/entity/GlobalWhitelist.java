@@ -9,7 +9,7 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name = "global_whitelist")
-public class GlobalWhitelist {
+public class GlobalWhitelist implements Whitelist {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

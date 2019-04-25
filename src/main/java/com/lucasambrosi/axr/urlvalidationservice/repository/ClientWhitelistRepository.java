@@ -1,13 +1,14 @@
 package com.lucasambrosi.axr.urlvalidationservice.repository;
 
 import com.lucasambrosi.axr.urlvalidationservice.entity.ClientWhitelist;
+import com.lucasambrosi.axr.urlvalidationservice.entity.Whitelist;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
 
 @Repository
 public interface ClientWhitelistRepository extends JpaRepository<ClientWhitelist, Long> {
 
-    List<ClientWhitelist> findByClientAndActiveTrue(String client);
+    Page<Whitelist> findByClientAndActiveTrue(String client, Pageable pageable);
 }
